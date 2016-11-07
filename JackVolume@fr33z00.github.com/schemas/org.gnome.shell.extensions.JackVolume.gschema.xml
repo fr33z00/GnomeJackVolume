@@ -1,0 +1,29 @@
+<schemalist gettext-domain="JackVolume">
+  <schema id="org.gnome.shell.extensions.JackVolume" path="/org/gnome/shell/extensions/JackVolume/">
+    <key name="link" type="b">
+      <default>false</default>
+      <summary>Whether jack slider shall be linked with general slider</summary>
+      <description>If true, paired</description>
+    </key>
+    <key name="audio" type="b">
+      <default>false</default>
+      <summary>Whether Audio port shall be used</summary>
+      <description>If true, audio is managed</description>
+    </key>
+    <key name="midi" type="b">
+      <default>false</default>
+      <summary>Whether Midi port shall be used</summary>
+      <description>If true, Midi controls are sent.</description>
+    </key>
+    <key name="port" type="s">
+      <default>""</default>
+      <summary>Midi port</summary>
+      <description>Specifies the Midi port used.</description>
+    </key>
+    <key name="volume" type="i">
+      <default>100</default>
+      <summary>volume</summary>
+      <description>Specifies the volume.</description>
+    </key>
+  </schema>
+</schemalist>
