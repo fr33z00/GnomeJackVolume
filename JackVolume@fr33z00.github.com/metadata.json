@@ -1,0 +1,8 @@
+{
+    "name": "Jack Volume", 
+    "shell-version": ["3.20"],
+    "description": "A global Jack Audio Connection Kit (JACK) volume for Gnome",
+    "url": "https://github.com/fr33z00/JackVolume",
+    "original-author": "fr33z00",
+    "uuid": "JackVolume@fr33z00.github.com"
+}
