@@ -18,7 +18,8 @@ QjackCtl
 Installation
 ============
 
-Clone somewhere and copy JackVolume@fr33z00.github.com into /home/user/.local/share/gnome-shell/extensions
+Clone somewhere, chmod +x file jackVolume.py and then copy JackVolume@fr33z00.github.com into /home/user/.local/share/gnome-shell/extensions
+
 May need gnome-shell restart (Alt+F2 r Enter) 
 Enable the extension (gnome-shell-extension-prefs in a terminal, or through gnome-tweak-tool)
 
