@@ -48,7 +48,7 @@ debug = 0
 
 def jvPrint(s):
     if debug == 1:
-    print(s)
+        print(s)
 
 class jvDbusService(dbus.service.Object):
     def __init__(self):
