@@ -282,7 +282,6 @@ function checkDbus() {
     try {
         proxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
     } catch(e){
-      Main.notify("unsuccessful");
       return true;
     }
     createSlider();
