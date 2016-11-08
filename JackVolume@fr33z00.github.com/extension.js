@@ -54,7 +54,6 @@ const Slider = imports.ui.slider;
 const St = imports.gi.St;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
-const Util = imports.misc.util;
 const Signals = imports.signals;
 
 // DBus interface of Python daemon
@@ -290,7 +289,7 @@ function init(Metadata) {
 function enable() {
     let _volumeMenu = Main.panel.statusArea.aggregateMenu._volume._volumeMenu;
 // start the Python daemon. It will manage the fact that a daemon is already running
-    Util.spawn([path + '/jackVolume.py']);
+    GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
 
 //FIXME this is ugly, but the only way I found to let Python daemon start its Dbus interface 
     GLib.spawn_command_line_sync('sleep 1');
