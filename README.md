@@ -3,7 +3,7 @@ A jack global volume extension for Gnome
 
 If you've always been frustrated that Jack Audio Connection Kit (JACK) doesn't allow the quick access (slider / keyboard shortcuts) to global output volume we are used to with Pulseaudio (or many other OSes), this Gnome extension is for you.
 
-[[GnomeJackVolume/jackVolume.png]]
+![Alt text](jackVolume.png?raw=true "Title")
 
 Requirements
 ============
