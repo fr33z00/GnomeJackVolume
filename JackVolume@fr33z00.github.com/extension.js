@@ -154,7 +154,7 @@ const JackSlider = new Lang.Class({
 
     _streamVolumeUpdate: function() {
         if (this.linked)
-            this.setValue(this.control._output._slider.value);
+            this._sliderChanged(this, this.control._output._slider._value);
     },
 
     // to function to unlink sliders
