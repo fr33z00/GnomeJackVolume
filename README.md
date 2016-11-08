@@ -22,30 +22,34 @@ Installation
 
 - Clone somewhere
 ```
-clone https://github.com/fr33z00/GnomeJackVolume
+git clone https://github.com/fr33z00/GnomeJackVolume
 ```
 - Copy/move to your local gnome extension folder
 ```
 mv GnomeJackVolume/JackVolume@fr33z00.github.com ~/.local/share/gnome-shell/extensions/
 ```
 
-- Restart gnome-shell (Alt+F2 r Enter).
 - Enable the extension 
 ```
 gnome-shell-extension-tool -e JackVolume@fr33z00.github.com
 ```
+- Finally, restart gnome-shell with Alt+F2 r (Enter)
+
 For required/optionnal software installation, please refer to their respective documentations.
 
 Usage
 -----
 
-Once enabled, you get a new slider in the system popup menu.
-Depending on the settings you choose in extension preference panel (again, gnome-shell-extension-prefs in a terminal, or through gnome-tweak-tool), you will get new audio and/or MIDI ports named gnome-shell.
+You get a new slider in the system popup menu, as in the above screenshot. You can now tune the settings in the preference panel through gnome-tweak-tool or
+```
+gnome-shell-extension-prefs
+```
+Depending on your settings, you will get new audio and/or MIDI ports named gnome-shell.
 
 Audio port output will directly connect to your system playback port (the same number of channels are created).
 You will need to configure your applications to connect to the new created gnome-shell port, but I guess you know how to do that, since you are a JACK user.
 
-MIDI port will connect to the MIDI port selected in the preference panel. It is intended to be used with a mixer like jack-mixer. It sends a Control Change 7 message on MIDI channel 0.
+MIDI port will connect to the port selected in the preference panel. It is intended to be used with a mixer like jack-mixer. It sends a Control Change 7 message on MIDI channel 0.
 
 If you experience XRuns with Audio port and if it is critical for you, use MIDI. This is because audio is managed in python, which is not the best way to get a realtime system.
 
