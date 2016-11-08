@@ -9,7 +9,7 @@ Requirements
 ============
 
 Gnome 3.20 (other versions untested, but may work from 3.16 and above. Needs metadata.json edition)
-Jack (1 ou 2)
+Jack (1 or 2)
 Python3.x
 jack-client (python-jack-client package in ubuntu)
 
@@ -22,7 +22,7 @@ Installation
 
 Clone somewhere and copy/move JackVolume@fr33z00.github.com directory into /home/user/.local/share/gnome-shell/extensions
 
-May need gnome-shell restart (Alt+F2 r Enter) 
+Restart gnome-shell (Alt+F2 r Enter) 
 Enable the extension (gnome-shell-extension-prefs in a terminal, or through gnome-tweak-tool)
 
 Usage
