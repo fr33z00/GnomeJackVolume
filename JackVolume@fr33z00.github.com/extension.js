@@ -102,6 +102,7 @@ let proxy;
 let path;
 let JackSliderInstance = null;
 let settings;
+let kill_timeout = 0;
 
 // define a slider class, basically a copy of the system slider, adapted to our needs
 const JackSlider = new Lang.Class({
@@ -137,7 +138,6 @@ const JackSlider = new Lang.Class({
         this.controlStreamUpdatedId;
     },
 
-    // the function to link the slider to the global volume slider
     // the function to link the slider to the global volume slider
     link: function() {
         if (this.linked)
@@ -276,23 +276,16 @@ function link_unlink () {
         JackSliderInstance.unlink();
 }
 
-function init(Metadata) {
-    let theme = imports.gi.Gtk.IconTheme.get_default();
-    theme.append_search_path(Metadata.path);
-    path = Metadata.path;
-    settings = get_settings();
-}
-
-function enable() {
-    let _volumeMenu = Main.panel.statusArea.aggregateMenu._volume._volumeMenu;
-// start the Python daemon. It will manage the fact that a daemon is already running
-    GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
-
-//FIXME this is ugly, but the only way I found to let Python daemon start its Dbus interface 
-    GLib.spawn_command_line_sync('sleep 1');
-
-    if (JackSliderInstance == null) {
+function checkDbus() {
+    if (kill_timeout)
+	return false;
+    try {
         proxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
+    } catch(e){
+      return true;
+    }
+    let _volumeMenu = Main.panel.statusArea.aggregateMenu._volume._volumeMenu;
+    if (JackSliderInstance == null) {
         // start the jack client
         proxy.startClientSync();
         // set the volume to its last value (in case it is not linked to system volume)
@@ -308,7 +301,20 @@ function enable() {
     settings.connect("changed::audio", function(){config()});
     settings.connect("changed::midi", function(){config()});
     settings.connect("changed::port", function(){config()});
+    return false;
+}
 
+function init(Metadata) {
+    let theme = imports.gi.Gtk.IconTheme.get_default();
+    theme.append_search_path(Metadata.path);
+    path = Metadata.path;
+    settings = get_settings();
+}
+
+function enable() {
+// start the Python daemon. It will manage the fact that a daemon is already running
+    GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
+    GLib.timeout_add_seconds(1, 1, checkDbus);
 }
 
 function disable() {
@@ -316,4 +322,5 @@ function disable() {
     proxy.QuitSync();
     JackSliderInstance.destroy();
     JackSliderInstance = null;
+    kill_timeout = 1;
 }
