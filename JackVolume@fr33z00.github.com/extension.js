@@ -131,20 +131,25 @@ const JackSlider = new Lang.Class({
               return this._slider.onKeyPressEvent(actor, event);
         }));
         this.control.addMenuItem(this.item);
+	// events connections Ids
+        this.controlSliderChangedId;
+        this.sliderChangedId;
+        this.controlStreamUpdatedId;
     },
 
+    // the function to link the slider to the global volume slider
     // the function to link the slider to the global volume slider
     link: function() {
         if (this.linked)
             return;
         this.linked = true;
-        // interconnect sliders
-        this.control._output._slider.connect('value-changed', Lang.bind(this, this._sliderChanged));
-        this._slider.connect('value-changed', Lang.bind(this.control._output, this.control._output._sliderChanged));
         // set the slider to the global volume value
         this.setValue(this.control._output._slider.value);
+        // interconnect sliders
+        this.controlSliderChangedId = this.control._output._slider.connect('value-changed', Lang.bind(this, this._sliderChanged));
+        this.sliderChangedId = this._slider.connect('value-changed', Lang.bind(this.control._output, this.control._output._sliderChanged));
         // connect to general stream updated event (to react to changes made in Pulseaudio)
-        this.control._output.connect('stream-updated', Lang.bind(this, this._streamVolumeUpdate));
+        this.controlStreamUpdatedId = this.control._output.connect('stream-updated', Lang.bind(this, this._streamVolumeUpdate));
     },
 
     _streamVolumeUpdate: function() {
@@ -157,18 +162,10 @@ const JackSlider = new Lang.Class({
         if (!this.linked)
             return;
         this.linked = false;
-        //FIXME disconnect does not seem to work on _output._slider. So, We disconnect All and reconnect signals. 
-        //May cause problems to any other extensions connected... 
-        this._slider.disconnectAll();
-        this.control._output._slider.disconnectAll();
-        // reconnect our slider to its events
-        this._slider.connect('value-changed', Lang.bind(this, this._sliderChanged));
-        this._slider.connect('drag-end', Lang.bind(this, this._notifyVolumeChange));
-        // reconnect global slider to its events
-        this.control._output._slider.connect('value-changed', Lang.bind(this.control._output, this.control._output._sliderChanged));
-        this.control._output._slider.connect('drag-end', Lang.bind(this.control._output, this.control._output._notifyVolumeChange));
-        // disconnect the slider from stream events
-        this.control._output.disconnect(_streamVolumeUpdate);
+        // clear events connections
+        this._slider.disconnect(this.sliderChangedId);
+        this.control._output._slider.disconnect(this.controlSliderChangedId);
+        this.control._output.disconnect(this.controlStreamUpdatedId);
     },
 
     _shouldBeVisible: function() {
