@@ -6,7 +6,7 @@
       <description>If true, paired</description>
     </key>
     <key name="audio" type="b">
-      <default>false</default>
+      <default>true</default>
       <summary>Whether Audio port shall be used</summary>
       <description>If true, audio is managed</description>
     </key>
