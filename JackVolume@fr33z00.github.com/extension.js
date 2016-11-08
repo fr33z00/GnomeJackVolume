@@ -277,6 +277,8 @@ function link_unlink () {
 }
 
 function checkDbus() {
+    if (kill_timeout)
+	return false;
     try {
         proxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
     } catch(e){
@@ -315,7 +317,8 @@ function init(Metadata) {
 }
 
 function enable() {
-// start the Python daemon. It will manage the fact that a daemon is already running
+    kill_timeout = 0;
+    // start the Python daemon. It will manage the fact that a daemon is already running
     GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
     GLib.timeout_add_seconds(1, 1, checkDbus);
 }
@@ -325,5 +328,6 @@ function disable() {
     proxy.QuitSync();
     JackSliderInstance.destroy();
     JackSliderInstance = null;
+    //break the timeout loop if ever it is still running
     kill_timeout = 1;
 }
