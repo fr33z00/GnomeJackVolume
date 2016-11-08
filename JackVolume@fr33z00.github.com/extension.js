@@ -277,13 +277,17 @@ function link_unlink () {
 }
 
 function checkDbus() {
-    if (kill_timeout)
-	return false;
     try {
         proxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
     } catch(e){
+      Main.notify("unsuccessful");
       return true;
     }
+    createSlider();
+    return false;
+}
+
+function createSlider() {
     let _volumeMenu = Main.panel.statusArea.aggregateMenu._volume._volumeMenu;
     if (JackSliderInstance == null) {
         // start the jack client
@@ -301,7 +305,6 @@ function checkDbus() {
     settings.connect("changed::audio", function(){config()});
     settings.connect("changed::midi", function(){config()});
     settings.connect("changed::port", function(){config()});
-    return false;
 }
 
 function init(Metadata) {
