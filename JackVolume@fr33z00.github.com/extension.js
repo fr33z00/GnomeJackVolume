@@ -309,6 +309,7 @@ function createSlider() {
 }
 
 function connectedCallback(emitter, something, params) {
+    // create the slider
     createSlider();
 }
 
@@ -319,7 +320,8 @@ function serverStoppedCallback(emitter, something, params) {
 }
 
 function serverStartedCallback(emitter, something, params) {
-    createSlider();
+    // start the jack client
+    jvProxy.startClientSync();
 }
 
 function nameAppeared() {
