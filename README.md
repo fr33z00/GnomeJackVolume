@@ -9,7 +9,7 @@ Requirements
 ------------
 
 - Gnome 3.20 (other versions untested, but may work from 3.16 and above. Needs metadata.json edition)
-- Jack (1 or 2)
+- JackDbus
 - Python3.x
 - jack-client (python-jack-client package in ubuntu)
 
@@ -54,5 +54,10 @@ MIDI port will connect to the port selected in the preference panel. It is inten
 If you experience XRuns with Audio port and if it is critical for you, use MIDI. This is because audio is managed in python, which is not the best way to get a realtime system.
 
 If you use pulseaudio with a jack-sink, you may also link the slider to pulseaudio one. This allows to control both systems at a time (and any keyboard shortcut). This is obvious, but leave jack-sink connected to system playback port.
+
+Note
+----
+
+If not already running, jack server will be started by the extension. If for any reason you stop the server, the extension will wait until you restart it to recreate the ports.
 
 Enjoy!
