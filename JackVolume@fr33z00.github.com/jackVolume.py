@@ -33,8 +33,10 @@
 
 
 import sys, getopt, jack, struct, time, math, dbus, dbus.service
-from gi.repository import Gtk
 from dbus.mainloop.glib import DBusGMainLoop
+import gi
+gi.require_version('Gtk', '3.0')
+from gi.repository import Gtk
 
 volume = 100
 audiovolume = (100/127) ** 5
@@ -44,9 +46,10 @@ outports = []
 client = ''
 portname = ''
 systemports = []
-debug = 0
+kill = 0
+debug = 1
 
-def jvPrint(s):
+def dbgPrint(s):
     if debug == 1:
         print(s)
 
@@ -56,39 +59,69 @@ class jvDbusService(dbus.service.Object):
         obj = 0
         try:
             bus.get_object('org.freedesktop.jackvolume', '/org/freedesktop/jackvolume')
-            jvPrint("dbus service already running, exiting")
+            dbgPrint("dbus service already running, exiting")
             obj = 1
         except:
-            jvPrint("starting dbus service")
+            dbgPrint("starting dbus service")
 
         if obj == 1:
             sys.exit()
 
         bus_name = dbus.service.BusName('org.freedesktop.jackvolume', bus)
         dbus.service.Object.__init__(self, bus_name, '/org/freedesktop/jackvolume')
-        jvPrint("dbus service started")
+        dbgPrint("dbus service started")
+
+    @dbus.service.signal(dbus_interface='org.freedesktop.jackvolume')
+    def connected(self):
+        """emit a signal to inform of client connected to jack """
+        dbgPrint("signal 'connected' emitted ")
+        return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
     def startClient(self):
         """starts interfaces"""
         global systemports
         if client != '':
-            return
-        jvPrint("starting jack client")
+            try:
+                client.deactivate()
+                client.close()
+            except:
+                dbgPrint("")
+
+        dbgPrint("starting jack client")
 
         def create_client():
             global client
+            global midiport
+            global inports
+            global outports
             try:
                 client = jack.Client("gnome-shell")
+                midiport = []
+                inports = []
+                outports = []
             except:
-                jvPrint("could not create client, retry in 2s")
+                dbgPrint("could not create client, retry in 2s")
                 time.sleep(2)
-                create_client()
+                if kill == 0:
+                    create_client()
 
         create_client()
-        jvPrint("client created")
+        dbgPrint("client created")
 
-        # jack callback
+        # jack shutdown callback
+        @client.set_shutdown_callback
+        def shutdown(status, reason):
+            global client
+            global midiport
+            global inports
+            global outports
+            client = ''
+            midiport = []
+            inports = []
+            outports = []
+
+        # jack process callback
         @client.set_process_callback
         def process(frames):
           # manage midi
@@ -106,7 +139,8 @@ class jvDbusService(dbus.service.Object):
         client.activate()
         # get the system audio ports
         systemports = client.get_ports(name_pattern='system', is_audio=True, is_input=True, is_physical=True)
-        jvPrint(str(systemports))
+        dbgPrint(str(systemports))
+        self.connected()
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -122,13 +156,13 @@ class jvDbusService(dbus.service.Object):
             inports = []
             outports = []
             for x in systemports:
-                jvPrint("creating audio ports " + str(i))
+                dbgPrint("creating audio ports " + str(i))
                 inports.append(client.inports.register("input_"+str(i+1)))
                 outports.append(client.outports.register("output_"+str(i+1)))
                 i += 1
             client.activate()
         except:
-            jvPrint ("could not create audio ports")
+            dbgPrint ("could not create audio ports")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -144,7 +178,7 @@ class jvDbusService(dbus.service.Object):
         inports = []
         outports = []
         client.activate()
-        jvPrint("unregistered audio ports")
+        dbgPrint("unregistered audio ports")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -155,7 +189,7 @@ class jvDbusService(dbus.service.Object):
             if outports[i].connections == []:
                 outports[i].connect(str(systemports[i]).split("'")[1]);
             i += 1
-        jvPrint("connected audio ports to system")
+        dbgPrint("connected audio ports to system")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -166,7 +200,7 @@ class jvDbusService(dbus.service.Object):
             if outports[i].connections != []:
                 outports[i].disconnect();
             i += 1
-        jvPrint("disconnected audio ports")
+        dbgPrint("disconnected audio ports")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -179,7 +213,7 @@ class jvDbusService(dbus.service.Object):
             midiport.append(client.midi_outports.register("output"))
             client.activate()
         except:
-            jvPrint("could not create midi port")
+            dbgPrint("could not create midi port")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -192,7 +226,7 @@ class jvDbusService(dbus.service.Object):
             client.midi_outports.clear()
             client.activate()
         except:
-            jvPrint("could not unregister midi port")
+            dbgPrint("could not unregister midi port")
         midiport = []
         return
 
@@ -204,7 +238,7 @@ class jvDbusService(dbus.service.Object):
         if midiport[0].connections != []:
             midiport[0].disconnect()
         midiport[0].connect(portname)
-        jvPrint("connected midi port to " + portname)
+        dbgPrint("connected midi port to " + portname)
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -212,7 +246,7 @@ class jvDbusService(dbus.service.Object):
         """disconnects midi port"""
         if midiport != [] and midiport[0].connections != []:
             midiport[0].disconnect()
-            jvPrint("disconnected midi port")
+            dbgPrint("disconnected midi port")
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
@@ -220,7 +254,7 @@ class jvDbusService(dbus.service.Object):
         """sets volume"""
         global volume
         global audiovolume
-        jvPrint("set volume to " + str(v))
+        dbgPrint("set volume to " + str(v))
         volume = int(v)
         audiovolume = (volume/127) ** 5
         return
@@ -239,19 +273,21 @@ class jvDbusService(dbus.service.Object):
     def setPortName(self, p):
         """sets port (to connect to) name"""
         global portname
-        jvPrint("set portname to " + p)
+        dbgPrint("set portname to " + p)
         portname = p
         return
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
     def getPortName(self):
         """gets port (to connect to) name"""
-        jvPrint("portname is " + portname)
+        dbgPrint("portname is " + portname)
         return portname
 
     @dbus.service.method(dbus_interface='org.freedesktop.jackvolume')
     def Quit(self):
         """removes this object from the DBUS connection and exits"""
+        global kill
+        kill = 1
         self.remove_from_connection()
         Gtk.main_quit()
         if client != '':
