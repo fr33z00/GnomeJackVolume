@@ -93,16 +93,35 @@ const jackVolumeInterface = '<node>\
     <method name="setVolume"> \
         <arg name="v" type="i" direction="in"/> \
     </method> \
+    <signal name="connected"> \
+    </signal> \
+</interface> \
+</node>';
+
+const jackControlInterface = '<node>\
+<interface name="org.jackaudio.JackControl"> \
+    <signal name="ServerStarted"> \
+    </signal> \
+    <signal name="ServerStopped"> \
+    </signal> \
 </interface> \
 </node>';
 
 const jackVolumeProxy = Gio.DBusProxy.makeProxyWrapper(jackVolumeInterface);
-let proxy;
+const jackServiceProxy = Gio.DBusProxy.makeProxyWrapper(jackControlInterface);
+let jvProxy;
+let jsProxy;
 
 let path;
 let JackSliderInstance = null;
 let settings;
-let kill_timeout = 0;
+let connectedId;
+let ServerStoppedId;
+let ServerStartedId;
+let linkId;
+let midiId;
+let audioId;
+let portId;
 
 // define a slider class, basically a copy of the system slider, adapted to our needs
 const JackSlider = new Lang.Class({
@@ -189,7 +208,7 @@ const JackSlider = new Lang.Class({
         let volume = (value * 127)>>0;
         settings.set_int("volume", volume);
         // send the volume value to the Python daemon
-        proxy.setVolumeSync(volume);
+        jvProxy.setVolumeSync(volume);
         this.setValue(value);
     },
 
@@ -202,7 +221,7 @@ const JackSlider = new Lang.Class({
     },
 
     getIcon: function() {
-        let volume = proxy.getVolumeSync()/127;
+        let volume = jvProxy.getVolumeSync()/127;
         if (volume <= 0) {
             return 'audio-volume-muted-symbolic';
         } else {
@@ -245,28 +264,28 @@ function config() {
     let audio = settings.get_boolean("audio");
     let midi = settings.get_boolean("midi");
     if (audio)
-        proxy.registerAudioPortsSync();
+        jvProxy.registerAudioPortsSync();
     else
-        proxy.unregisterAudioPortsSync();
+        jvProxy.unregisterAudioPortsSync();
     if (midi)
-        proxy.registerMidiPortSync();
+        jvProxy.registerMidiPortSync();
     else
-        proxy.unregisterMidiPortSync();
+        jvProxy.unregisterMidiPortSync();
 
     if (audio)
-        proxy.connectAudioPortsSync();
+        jvProxy.connectAudioPortsSync();
     else
-        proxy.disconnectAudioPortsSync();
+        jvProxy.disconnectAudioPortsSync();
 
     if (midi) {
         let port = settings.get_string("port");
         if (port.indexOf(":") > 0) {
-            proxy.setPortNameSync(port);
-            proxy.connectMidiPortSync();
+            jvProxy.setPortNameSync(port);
+            jvProxy.connectMidiPortSync();
         }
     }
     else
-        proxy.disconnectMidiPortSync();
+        jvProxy.disconnectMidiPortSync();
 }
 
 function link_unlink () {
@@ -276,36 +295,39 @@ function link_unlink () {
         JackSliderInstance.unlink();
 }
 
-function checkDbus() {
-    if (kill_timeout)
-	return false;
-    try {
-        proxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
-    } catch(e){
-      return true;
-    }
-    createSlider();
-    return false;
-}
-
 function createSlider() {
     let _volumeMenu = Main.panel.statusArea.aggregateMenu._volume._volumeMenu;
     if (JackSliderInstance == null) {
-        // start the jack client
-        proxy.startClientSync();
         // set the volume to its last value (in case it is not linked to system volume)
         let volume = settings.get_int("volume");
-        proxy.setVolumeSync(volume);
+        jvProxy.setVolumeSync(volume);
         JackSliderInstance = new JackSlider(_volumeMenu);
     }
 
     config();
     link_unlink();
-    // connect to settings panel
-    settings.connect("changed::link", link_unlink);
-    settings.connect("changed::audio", function(){config()});
-    settings.connect("changed::midi", function(){config()});
-    settings.connect("changed::port", function(){config()});
+}
+
+function connectedCallback(emitter, something, params) {
+    createSlider();
+}
+
+function serverStoppedCallback(emitter, something, params) {
+    JackSliderInstance.destroy();
+    JackSliderInstance = null;
+    Main.notify('Jack server stopped');
+}
+
+function serverStartedCallback(emitter, something, params) {
+    createSlider();
+}
+
+function nameAppeared() {
+    // connect to JackVolume daemon
+    jvProxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
+    connectedId = jvProxy.connectSignal('connected', connectedCallback);
+    // start the jack client
+    jvProxy.startClientSync();
 }
 
 function init(Metadata) {
@@ -316,17 +338,40 @@ function init(Metadata) {
 }
 
 function enable() {
-    kill_timeout = 0;
     // start the Python daemon. It will manage the fact that a daemon is already running
     GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
-    GLib.timeout_add_seconds(1, 1, checkDbus);
+    Gio.bus_watch_name(2, 'org.freedesktop.jackvolume', 0, nameAppeared, null);
+    // connect to jackDbus
+    jsProxy = new jackServiceProxy(Gio.DBus.session, 'org.jackaudio.service','/org/jackaudio/Controller');
+    ServerStoppedId = jsProxy.connectSignal('ServerStopped', serverStoppedCallback);
+    ServerStartedId = jsProxy.connectSignal('ServerStarted', serverStartedCallback);
+    // connect to settings panel
+    linkId = settings.connect("changed::link", link_unlink);
+    audioId = settings.connect("changed::audio", function(){config()});
+    midiId = settings.connect("changed::midi", function(){config()});
+    portId = settings.connect("changed::port", function(){config()});
 }
 
 function disable() {
+    // disconnect DBus signals
+    if (connectedId)
+        jvProxy.disconnectSignal(connectedId);
+    if (ServerStoppedId)
+        jsProxy.disconnectSignal(ServerStoppedId);
+    if (ServerStartedId)
+        jsProxy.disconnectSignal(ServerStartedId);
+    // disconnect settings
+    if (linkId)
+        settings.disconnect(linkId);
+    if (audioId)
+        settings.disconnect(audioId);
+    if (midiId)
+        settings.disconnect(midiId);
+    if (portId)
+        settings.disconnect(portId);
     // kill the daemon
-    proxy.QuitSync();
+    jvProxy.QuitSync();
+    // destroy slider
     JackSliderInstance.destroy();
     JackSliderInstance = null;
-    //break the timeout loop if ever it is still running
-    kill_timeout = 1;
 }
