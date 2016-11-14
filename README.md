@@ -8,14 +8,15 @@ If you've always been frustrated that Jack Audio Connection Kit (JACK) doesn't a
 Requirements
 ------------
 
-- Gnome 3.20 (other versions untested, but may work from 3.16 and above. Needs metadata.json edition)
+- Gnome 3.20/3.22 (other versions untested, but may work from 3.16. Needs metadata.json edition)
 - JackDbus
 - Python3.x
-- jack-client (python-jack-client package in ubuntu)
+- jack-client (https://pypi.python.org/pypi/JACK-Client)
 
 Optionnaly:
 - jack-mixer
 - QjackCtl
+-JackConnect (https://github.com/fr33z00/GnomeJackConnect)
 
 Installation
 ------------
