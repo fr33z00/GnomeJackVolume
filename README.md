@@ -16,7 +16,7 @@ Requirements
 Optionnaly:
 - jack-mixer
 - QjackCtl
--JackConnect (https://github.com/fr33z00/GnomeJackConnect)
+- JackConnect (https://github.com/fr33z00/GnomeJackConnect)
 
 Installation
 ------------
