@@ -1,7 +1,7 @@
 {
     "name": "JackVolume", 
     "shell-version": ["3.20", "3.22"],
-    "description": "A global Jack Audio Connection Kit (JACK) volume for Gnome",
+    "description": "A global JACK (Jack Audio Connection Kit) volume for Gnome. Requires jackdbus (jack2), python3 and jack-client python module(https://pypi.python.org/pypi/JACK-Client). Please refer to extension homepage for installation help.",
     "url": "https://github.com/fr33z00/GnomeJackVolume",
     "original-author": "fr33z00",
     "uuid": "JackVolume@fr33z00.github.com",
