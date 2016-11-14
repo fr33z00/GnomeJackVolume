@@ -9,9 +9,12 @@ Requirements
 ------------
 
 - Gnome 3.20/3.22 (other versions untested, but may work from 3.16. Needs metadata.json edition)
-- JackDbus
+- Jackdbus (jackd2)
 - Python3.x
 - jack-client (https://pypi.python.org/pypi/JACK-Client)
+
+Recommended:
+- pulseaudio-module-jack
 
 Optionnaly:
 - jack-mixer
@@ -36,7 +39,7 @@ gnome-shell-extension-tool -e JackVolume@fr33z00.github.com
 ```
 - Finally, restart gnome-shell with Alt+F2 r (Enter)
 
-For required/optionnal software installation, please refer to their respective documentations.
+For jack-client installation see below. For other required/optionnal software installation, please refer to their respective documentations.
 
 Usage
 -----
@@ -62,3 +65,17 @@ Note
 If not already running, jack server will be started by the extension. If for any reason you stop the server, the extension will wait until you restart it to recreate the ports.
 
 Enjoy!
+
+jack-client installation
+------------------------
+Since it is not trivial for beginners, here are some guidelines for jack-client installation on ubuntu.
+
+First install the necessary stuff:
+```
+sudo apt install python3-setuptools python3-cffi libffi-dev
+```
+Then download and extract the package from https://pypi.python.org/pypi/JACK-Client, cd to the newly created JACK-client-0.x.x folder and launch its setup with :
+```
+sudo python3 ./setup.py install
+```
+You're done!
