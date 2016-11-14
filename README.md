@@ -72,7 +72,7 @@ Since it is not trivial for beginners, here are some guidelines for jack-client 
 
 First install the necessary stuff:
 ```
-sudo apt install python3-setuptools python3-cffi libffi-dev
+sudo apt install libjack-jackd2-dev python3-setuptools python3-cffi libffi-dev
 ```
 Then download and extract the package from https://pypi.python.org/pypi/JACK-Client, cd to the newly created JACK-client-0.x.x folder and launch its setup with :
 ```
