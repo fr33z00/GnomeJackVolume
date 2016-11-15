@@ -122,6 +122,7 @@ let linkId;
 let midiId;
 let audioId;
 let portId;
+let watchId;
 
 // define a slider class, basically a copy of the system slider, adapted to our needs
 const JackSlider = new Lang.Class({
@@ -324,12 +325,17 @@ function serverStartedCallback(emitter, something, params) {
     jvProxy.startClientSync();
 }
 
-function nameAppeared() {
+function nameExists() {
     // connect to JackVolume daemon
     jvProxy = new jackVolumeProxy(Gio.DBus.session, 'org.freedesktop.jackvolume','/org/freedesktop/jackvolume');
     connectedId = jvProxy.connectSignal('connected', connectedCallback);
     // start the jack client
     jvProxy.startClientSync();
+}
+
+function nameUnknown() {
+    // if we are here, python daemon was not launched or died, so (re)launch it
+    GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
 }
 
 function init(Metadata) {
@@ -340,9 +346,8 @@ function init(Metadata) {
 }
 
 function enable() {
-    // start the Python daemon. It will manage the fact that a daemon is already running
-    GLib.spawn_command_line_async('python3 ' + path + '/jackVolume.py');
-    Gio.bus_watch_name(2, 'org.freedesktop.jackvolume', 0, nameAppeared, null);
+    // watch the Python daemon name on Dbus.
+    watchId = Gio.bus_watch_name(2, 'org.freedesktop.jackvolume', 0, nameExists, nameUnknown);
     // connect to jackDbus
     jsProxy = new jackServiceProxy(Gio.DBus.session, 'org.jackaudio.service','/org/jackaudio/Controller');
     ServerStoppedId = jsProxy.connectSignal('ServerStopped', serverStoppedCallback);
@@ -362,6 +367,8 @@ function disable() {
         jsProxy.disconnectSignal(ServerStoppedId);
     if (ServerStartedId)
         jsProxy.disconnectSignal(ServerStartedId);
+    if (watchId)
+        Gio.bus_unwatch_name(watchId);
     // disconnect settings
     if (linkId)
         settings.disconnect(linkId);
