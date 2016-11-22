@@ -23,6 +23,7 @@ Optionnaly:
 
 Installation
 ------------
+The easyest way is to go to https://extensions.gnome.org/extension/1135/jackvolume/ and switch to ON. Alternatively, you can manually install it with these steps.
 
 - Clone somewhere
 ```
